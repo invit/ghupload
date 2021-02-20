@@ -39,12 +39,14 @@ var uploadCmd = &cobra.Command{
 		if args[0] == "-" {
 			upload = os.Stdin
 		} else {
-			upload, err := os.Open(args[0])
-			defer func() { _ = upload.Close() }()
+			f, err := os.Open(args[0])
+			defer func() { _ = f.Close() }()
 
 			if err != nil {
 				return err
 			}
+
+			upload = f
 		}
 
 		ctx := context.Background()
