@@ -12,7 +12,7 @@ var rootCmd = &cobra.Command{
 	Use:           "ghupload",
 	Short:         "Uploads a file to github repository",
 	SilenceErrors: true,
-	Version: fmt.Sprintf("%s-%s\n", version.Version, version.Commit),
+	Version:       fmt.Sprintf("%s-%s\n", version.Version, version.Commit),
 }
 
 // Execute runs root command

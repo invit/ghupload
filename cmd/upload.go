@@ -9,24 +9,21 @@ import (
 
 	"github.com/google/go-github/v33/github"
 	"github.com/invit/ghupload/internal/lib/client"
+	"github.com/invit/ghupload/internal/lib/repourl"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	rootCmd.AddCommand(uploadCmd)
 
-	uploadCmd.Flags().StringP("owner", "o", "", "Repository owner (user/organisation) (required)")
-	uploadCmd.Flags().StringP("repo", "r", "", "Repository (required)")
 	uploadCmd.Flags().StringP("branch", "b", "", "Commit to branch (default branch if empty)")
 	uploadCmd.Flags().StringP("message", "m", "", "Commit message (required)")
 
-	_ = uploadCmd.MarkFlagRequired("owner")
-	_ = uploadCmd.MarkFlagRequired("repo")
 	_ = uploadCmd.MarkFlagRequired("message")
 }
 
 var uploadCmd = &cobra.Command{
-	Use:   "upload <local-path> <remote-path>",
+	Use:   "upload <local-path> <remote-url>",
 	Short: "Uploads file to github repository",
 	Args:  cobra.ExactArgs(2),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -37,11 +34,17 @@ var uploadCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		upload, err := os.Open(args[0])
-		defer func(){ _ = upload.Close() }()
+		var upload *os.File
 
-		if err != nil {
-			return err
+		if args[0] == "-" {
+			upload = os.Stdin
+		} else {
+			upload, err := os.Open(args[0])
+			defer func() { _ = upload.Close() }()
+
+			if err != nil {
+				return err
+			}
 		}
 
 		ctx := context.Background()
@@ -51,29 +54,39 @@ var uploadCmd = &cobra.Command{
 			return err
 		}
 
-		owner, _ := cmd.Flags().GetString("owner")
-		repo, _ := cmd.Flags().GetString("repo")
-		msg, _ := cmd.Flags().GetString("msg")
-		branch, _ := cmd.Flags().GetString("branch")
-		path := args[1]
+		// parse remote url
+		repo, err := repourl.Parse(args[1])
 
-		opts := &github.RepositoryContentFileOptions{
-			Message:   github.String(msg),
+		if err != nil {
+			return err
 		}
 
-		if(branch != ""){
+		msg, _ := cmd.Flags().GetString("message")
+		branch, _ := cmd.Flags().GetString("branch")
+
+		opts := &github.RepositoryContentFileOptions{
+			Message: github.String(msg),
+		}
+
+		if branch != "" {
 			opts.Branch = github.String(branch)
 		}
 
 		// check if file exists in repo already
-		f, d, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{})
+		f, d, _, err := c.Repositories.GetContents(
+			ctx,
+			repo.Owner,
+			repo.Repository,
+			repo.Path,
+			&github.RepositoryContentGetOptions{},
+		)
 
 		if err != nil {
 			return err
 		}
 
 		if len(d) > 0 {
-			return fmt.Errorf("Target expects path to file, %s is a directory", path)
+			return fmt.Errorf("Target expects path to file, %s is a directory", repo.Path)
 		}
 
 		if f != nil {
@@ -90,7 +103,7 @@ var uploadCmd = &cobra.Command{
 		opts.Content = content
 
 		// upload file
-		_, _, err = c.Repositories.CreateFile(ctx, owner, repo, path, opts)
+		_, _, err = c.Repositories.CreateFile(ctx, repo.Owner, repo.Repository, repo.Path, opts)
 
 		return err
 	},

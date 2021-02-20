@@ -8,7 +8,7 @@ import (
 )
 
 // New returns new github client
-func New(ctx context.Context, token string) (*github.Client, error){
+func New(ctx context.Context, token string) (*github.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
