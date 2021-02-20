@@ -1,6 +1,6 @@
 .PHONY: build install snapshot dist test vet lint fmt run clean
 OUT := ghupload
-PKG := github.com/invit/varnish-towncrier
+PKG := github.com/invit/ghupload
 PKG_LIST := $(shell go list ${PKG}/...)
 GO_FILES := $(shell find . -name '*.go')
 
