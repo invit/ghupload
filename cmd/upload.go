@@ -105,8 +105,14 @@ var uploadCmd = &cobra.Command{
 		opts.Content = content
 
 		// upload file
-		_, _, err = c.Repositories.CreateFile(ctx, repo.Owner, repo.Repository, repo.Path, opts)
+		cr, _, err := c.Repositories.CreateFile(ctx, repo.Owner, repo.Repository, repo.Path, opts)
 
-		return err
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(*cr.SHA)
+
+		return nil
 	},
 }
