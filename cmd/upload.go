@@ -23,9 +23,30 @@ func init() {
 }
 
 var uploadCmd = &cobra.Command{
-	Use:   "upload <local-path> <remote-url>",
-	Short: "Uploads file to github repository",
-	Args:  cobra.ExactArgs(2),
+	Use:                   "upload -m <commit-msg> [-b <branch>] <local-path> <remote-url>",
+	DisableFlagsInUseLine: true,
+	Short:                 "Uploads file to github repository",
+	Long: "Uploads (commits) a local file to a github repository\n" +
+		"\n" +
+		"<local-path> is either a path to a local file or - for STDIN.\n" +
+		"<remote-url> can be one of the following formats and has to include the repository owner, " +
+		"the repository and the path to the file inside the repository:\n" +
+		"* https://github.com/owner/repository/path/in/repo\n" +
+		"* git@github.com:owner/repository.git/path/in/repo\n" +
+		"* owner/repository/path/in/repo\n" +
+		"\n" +
+		"Command prints the commit SHA on success.",
+	Example: "* Upload local file\n" +
+		"  $ ghupload upload -m \"commit msg\" README.md owner/repository/README.md\n" +
+		"  b6cbb5b2ea041956c4ac8da17007f95d2312a461\n" +
+		"* Upload data from STDIN\n" +
+		"  $ ghupload upload -m \"commit msg\" - owner/repository/README.md\n" +
+		"  this is the new \n" +
+		"  content \n" +
+		"  of the file\n" +
+		"  ^D\n" +
+		"  3be39e60c3ae44faa40f4efc31241f3564c396f1",
+	Args: cobra.ExactArgs(2),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if os.Getenv("GITHUB_TOKEN") == "" {
 			return errors.New("Missing GITHUB_TOKEN environment variable")
