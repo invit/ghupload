@@ -40,13 +40,13 @@ _remote-url_ can be one of the following formats and has to include the reposito
 * Upload file
 
 ```shell
-$ upload -m "commit msg" README.md invit/ghupload/README.md
+$ ghupload upload -m "commit msg" README.md invit/ghupload/README.md
 ```
 
 * Upload data from STDIN
 
 ```shell
-$ upload -m "commit msg" - invit/ghupload/README.md
+$ ghupload upload -m "commit msg" - invit/ghupload/README.md
 this is the new 
 content 
 of the file
