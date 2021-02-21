@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/google/go-github/v33/github"
@@ -96,7 +96,7 @@ var uploadCmd = &cobra.Command{
 		}
 
 		// attach file content
-		content, err := ioutil.ReadAll(upload)
+		content, err := io.ReadAll(upload)
 
 		if err != nil {
 			return err
