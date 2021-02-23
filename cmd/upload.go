@@ -96,7 +96,7 @@ var uploadCmd = &cobra.Command{
 		}
 
 		// check if file exists in repo already
-		f, d, _, err := c.Repositories.GetContents(
+		f, d, resp, err := c.Repositories.GetContents(
 			ctx,
 			repo.Owner,
 			repo.Repository,
@@ -104,7 +104,7 @@ var uploadCmd = &cobra.Command{
 			&github.RepositoryContentGetOptions{},
 		)
 
-		if err != nil {
+		if resp == nil && err != nil {
 			return err
 		}
 
