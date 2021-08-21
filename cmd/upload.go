@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/google/go-github/v33/github"
 	"github.com/invit/ghupload/internal/lib/client"
@@ -16,14 +17,51 @@ import (
 func init() {
 	rootCmd.AddCommand(uploadCmd)
 
+	uploadCmd.Flags().StringP("token", "t", "", fmt.Sprintf("File to read token from (default %s)", getTokenFilePath()))
 	uploadCmd.Flags().StringP("branch", "b", "", "Commit to branch (default branch if empty)")
 	uploadCmd.Flags().StringP("message", "m", "", "Commit message (required)")
 
 	_ = uploadCmd.MarkFlagRequired("message")
 }
 
+func getTokenFilePath() string {
+	c, err := os.UserConfigDir()
+
+	if err != nil {
+		return ""
+	}
+
+	return filepath.Join(c, "ghupload", "github-token")
+}
+
+func readToken(tokenFile string) (string, error) {
+	if tokenFile != "" {
+		t, err := os.ReadFile(getTokenFilePath())
+
+		if err != nil {
+			return "", err
+		}
+
+		return strings.TrimSpace(string(t)), nil
+	}
+
+	if t, ok := os.LookupEnv("GITHUB_TOKEN"); ok {
+		return t, nil
+	}
+
+	t, err := os.ReadFile(getTokenFilePath())
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(t)), nil
+}
+
+var token = ""
+
 var uploadCmd = &cobra.Command{
-	Use:                   "upload -m <commit-msg> [-b <branch>] <local-path> <remote-url>",
+	Use:                   "upload -m <commit-msg> [-b <branch>] [-t <token-file>] <local-path> <remote-url>",
 	DisableFlagsInUseLine: true,
 	Short:                 "Uploads file to github repository",
 	Long: "Uploads (commits) a local file to a github repository\n" +
@@ -35,7 +73,13 @@ var uploadCmd = &cobra.Command{
 		"* git@github.com:owner/repository.git/path/in/repo\n" +
 		"* owner/repository/path/in/repo\n" +
 		"\n" +
-		"Command prints the commit SHA on success.",
+		"Command prints the commit SHA on success." +
+		"\n\n" +
+		"Authentication:\n" +
+		"  Create personal access token on Github with read/write access to the repository and either provide\n" +
+		"  * GITHUB_TOKEN environment variable with the token, or\n" +
+		fmt.Sprintf("  * Store the token in the %s file, or\n", getTokenFilePath()) +
+		"  * Provide a --token parameter pointing to a file containing the token.",
 	Example: "* Upload local file\n" +
 		"  $ ghupload upload -m \"commit msg\" README.md owner/repository/README.md\n" +
 		"  b6cbb5b2ea041956c4ac8da17007f95d2312a461\n" +
@@ -48,9 +92,14 @@ var uploadCmd = &cobra.Command{
 		"  3be39e60c3ae44faa40f4efc31241f3564c396f1",
 	Args: cobra.ExactArgs(2),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if os.Getenv("GITHUB_TOKEN") == "" {
-			return errors.New("Missing GITHUB_TOKEN environment variable")
+		tokenFile, _ := cmd.Flags().GetString("token")
+		t, err := readToken(tokenFile)
+
+		if err != nil {
+			return fmt.Errorf("Missing/invalid authentication (%s)", err)
 		}
+
+		token = t
 
 		return nil
 	},
@@ -71,7 +120,7 @@ var uploadCmd = &cobra.Command{
 		}
 
 		ctx := context.Background()
-		c, err := client.New(ctx, os.Getenv("GITHUB_TOKEN"))
+		c, err := client.New(ctx, token)
 
 		if err != nil {
 			return err

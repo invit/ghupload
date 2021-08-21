@@ -10,22 +10,28 @@ Downloadable binaries are available from the [releases page](https://github.com/
 
 ## Setup
 
-* Create a [Github personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
-* Set _GITHUB_TOKEN_ environment variable 
+Create a [Github personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) and store it in one of the following ways:
+
+*  _GITHUB_TOKEN_ environment variable 
 
 ```shell
 $ export GITHUB_TOKEN="your-personal-access-token"
 ```
 
+* In a _github-token_ file. See help message for the upload command for the location on your system. On Linux this is usally _$HOME/.config/ghupload/github-token_, on MacOS _$HOME/Library/Application/ghupload/github-token_ and _%AppData%/ghupload/github-token_ on Windows. 
+
+* Provide a _token_ parameter to the upload command, pointing to a file containing the access token. 
+
 ## Usage
 
 ```
 Usage:
-  ghupload upload -m <commit-msg> [-b <branch>] <local-path> <remote-url>
+  ghupload upload -m <commit-msg> [-b <branch>] [-t <token-file>] <local-path> <remote-url>
 
 Flags:
   -b, --branch string    Commit to branch (default branch if empty)
   -m, --message string   Commit message (required)
+  -t, --token string     File to read token from (default /home/USER/.config/ghupload/github-token)
 ```
 
 _local-path_ is either a path to a local file or "-" for STDIN. 
