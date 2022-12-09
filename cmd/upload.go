@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v48/github"
 	"github.com/invit/ghupload/internal/lib/client"
 	"github.com/invit/ghupload/internal/lib/repourl"
 	"github.com/spf13/cobra"

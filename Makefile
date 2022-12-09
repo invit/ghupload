@@ -25,9 +25,7 @@ vet:
 	@go vet ${PKG_LIST}
 
 lint:
-	@for file in ${GO_FILES} ;  do \
-		golint $$file ; \
-	done
+	golangci-lint run
 
 fmt:
 	@gofmt -l -w -s ${GO_FILES}
